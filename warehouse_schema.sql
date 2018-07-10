@@ -5,16 +5,17 @@ DROP TABLE LocationDim CASCADE;
 DROP TABLE TimeDim CASCADE;
 
 CREATE TABLE ProductDim (
-  ProductID int NOT NULL,
+  ProductID SERIAL,
   Category varchar(255) NOT NULL,
   Family   varchar(255) NOT NULL,
   Class    varchar(255) NOT NULL,
   Price    double precision NOT NULL,
-  PRIMARY KEY (ProductID)
+  Article  varchar(255) NOT NULL,
+  PRIMARY KEY(ProductID)
 );
 
 CREATE TABLE LocationDim (
-  LocationID int NOT NULL ,
+  LocationID SERIAL,
   Land   varchar(255) NOT NULL,
   Region varchar(255) NOT NULL,
   State  varchar(255) NOT NULL,
@@ -23,12 +24,12 @@ CREATE TABLE LocationDim (
 );
 
 CREATE TABLE TimeDim (
-  TimeID int NOT NULL ,
+  TimeID SERIAL,
   Day      integer NOT NULL,
   Month    integer NOT NULL,
   Year     integer NOT NULL,
   Quarter  integer NOT NULL,
-  PRIMARY KEY (TimeID)
+  PRIMARY KEY(TimeID)
 );
 
 CREATE TABLE SalesFact (
