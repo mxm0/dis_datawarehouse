@@ -3,6 +3,7 @@ import psycopg2
 import psycopg2.extras
 from config import config
 import csv
+import time
  
 def connect():
     """ Connect to the PostgreSQL database server """
@@ -112,7 +113,8 @@ if __name__ == '__main__':
                 # Set args for time dimension
                 day, month, year = sale[0].split('.')
                 quarter = get_quarter(int(month))
-                args_time.append((int(day), int(month), int(year), quarter))
+                date = sale[0].replace('.', '-')
+                args_time.append((date, int(month), int(year), quarter))
 
             except KeyError:
                 print("Article or Store not defined")

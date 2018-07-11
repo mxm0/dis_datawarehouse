@@ -25,7 +25,7 @@ CREATE TABLE LocationDim (
 
 CREATE TABLE TimeDim (
   TimeID SERIAL,
-  Day      integer NOT NULL,
+  Day      Date    NOT NULL,
   Month    integer NOT NULL,
   Year     integer NOT NULL,
   Quarter  integer NOT NULL,

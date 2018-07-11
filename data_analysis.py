@@ -4,6 +4,7 @@ import psycopg2.extras
 import csv
 from connect import connect
 from collections import OrderedDict
+import sys
 
 def print_crosstable():
     conn = connect()
@@ -102,7 +103,90 @@ def print_crosstable():
         table_totals.append(totals[0])
 
     print(template.format('Table Total', *table_totals, sum(table_totals)))
+    conn.close()
 
+def print_cube(currLocationDim, currProductDim, currTimeDim):
+    print(currLocationDim, currProductDim, currTimeDim)
+    query = "SELECT sum(salesfact.profit), sum(salesfact.salesunit), " + str(currLocationDim) + ", " + str(currProductDim) + ", " + str(currTimeDim) + "\
+             FROM salesfact\
+             INNER JOIN locationdim ON locationdim.locationid = salesfact.locationid\
+             INNER JOIN productdim ON productdim.productid = salesfact.productid\
+             INNER JOIN timedim ON timedim.timeid = salesfact.timeid\
+             GROUP BY ROLLUP(" + str(currLocationDim) + ", " + str(currProductDim) + ", " + str(currTimeDim) + ")\
+             ORDER BY (%s, %s, %s)"
+
+    conn = connect()
+    cur = conn.cursor()
+    cur.execute(query, (currLocationDim, currProductDim, currTimeDim))
+    rows = cur.fetchall()
+    
+    template = "{:<18} | {:<18} | {:<18} | {:<18} | {:<18}"
+    print(template.format('Total Profit', 'Total units sold', currLocationDim.capitalize(), currProductDim.capitalize(), currTimeDim.capitalize()))
+    print('-' * 90)
+    for row in rows:
+        print(template.format(str(row[0]), str(row[1]), str(row[2]), str(row[3]), str(row[4])))
+        print('-' * 90)
+
+def getDim(dimValues, currValue, drill):
+    if drill and currValue[0] == len(dimValues) - 1:
+        return currValue[0]
+    elif not drill and currValue[0] == 0:
+        return currValue[0]
+    
+    if drill:
+        return currValue[0] + 1
+    else:
+        return currValue[0] - 1
+
+def DimMenu(drill, locationDims, currLocationDim, productDims, currProductDim, timeDims, currTimeDim):
+    while True:
+        print('#' * 10, 'CHOOSE DIMENSION', '#' * 10)
+        print('1- Location\n'\
+              '2- Product\n'\
+              '3- Time\n'\
+              '4- Back\n'\
+             )
+
+        print('Current dimensions:', locationDims[currLocationDim[0]], productDims[currProductDim[0]], timeDims[currTimeDim[0]])
+        action = input('Choose action:')
+
+        if int(action) == 1:
+            currLocationDim[0] = getDim(locationDims, currLocationDim, drill)
+            print_cube(locationDims[currLocationDim[0]], productDims[currProductDim[0]], timeDims[currTimeDim[0]])
+        elif int(action) == 2:
+            currProductDim[0] = getDim(productDims, currProductDim, drill)
+            print_cube(locationDims[currLocationDim[0]], productDims[currProductDim[0]], timeDims[currTimeDim[0]])
+        elif int(action) == 3:
+            currTimeDim[0] = getDim(timeDims, currTimeDim, drill)
+            print_cube(locationDims[currLocationDim[0]], productDims[currProductDim[0]], timeDims[currTimeDim[0]])
+        else:
+            return
 
 if __name__ == '__main__':
-   print_crosstable() 
+   
+   #print_crosstable()
+
+   DRILLDOWN = 1
+   ROLLUP    = 2
+   QUIT      = 3
+   
+   locationDims    = ["land", "region", "state", "shop"]
+   currLocationDim = [0]
+   productDims     = ["category", "family", "class", "article"]
+   currProductDim  = [0]
+   timeDims        = ["year", "quarter", "month", "day"]
+   currTimeDim     = [0]
+   while True:
+       print('#' * 10, 'MENU', '#' * 10)
+       print('1- Drill Down\n'\
+             '2- Roll Up\n'\
+             '3- Quit\n'\
+            )
+       action = input('Choose action:')
+       if int(action) == 1:
+           DimMenu(True, locationDims, currLocationDim, productDims, currProductDim, timeDims, currTimeDim)
+       elif int(action) == 2:
+           DimMenu(False, locationDims, currLocationDim, productDims, currProductDim, timeDims, currTimeDim) 
+       else:
+          print('Quitting application...')
+          sys.exit(0)
